@@ -1,12 +1,14 @@
-# DAW Out
+# OSCLAP
 
-VST3/CLAP Plugin for MIDI/OSC output from a DAW to an OSC Server
+CLAP Plugin for MIDI/OSC output from a DAW to an OSC Server
 
-![plugin_gui](img/plugin_gui.png)
+Adapted from [here](https://github.com/gamingrobot/daw-out) for my own purposes.
+
+<!-- ![plugin_gui](img/plugin_gui.png) -->
 
 ## Releases
 
-Download the latest release [here](https://github.com/gamingrobot/daw-out/releases)
+<!-- Download the latest release [here](https://github.com/gamingrobot/daw-out/releases) -->
 
 ## OSC Messages
 
@@ -39,5 +41,5 @@ Downsampled audio as individual OSC messages ~100hz
 ## Building
 
 ```sh
-cargo xtask bundle daw-out --release
+cargo xtask bundle OSCLAP --release
 ```

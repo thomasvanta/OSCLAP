@@ -7,15 +7,15 @@ use nih_plug_vizia::{assets, create_vizia_editor, ViziaState};
 use std::sync::Arc;
 
 use crate::subviews::{ParamView, SettingsView};
-use crate::{DawOutParams, OscAddressBaseType, OscChannelMessageType, OscConnectionType};
+use crate::{OsClapParams, OscAddressBaseType, OscChannelMessageType, OscConnectionType};
 
 /// VIZIA uses points instead of pixels for text
 const POINT_SCALE: f32 = 0.75;
 
 #[derive(Lens)]
-struct DawOutEditor {
+struct OsClapEditor {
     sender: Arc<Sender<OscChannelMessageType>>,
-    params: Arc<DawOutParams>,
+    params: Arc<OsClapParams>,
     settings: OscSettings,
     log: Vec<String>
 }
@@ -26,7 +26,7 @@ pub struct OscSettings {
     pub osc_address_base: String,
 }
 
-pub enum DawOutEditorEvent {
+pub enum OsClapEditorEvent {
     SetOscServerAddress(String),
     SetOscServerPort(u16),
     SetOscAddressBase(String),
@@ -34,25 +34,25 @@ pub enum DawOutEditorEvent {
     AddressBaseChange,
 }
 
-impl Model for DawOutEditor {
+impl Model for OsClapEditor {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            DawOutEditorEvent::SetOscServerAddress(ip) => {
+            OsClapEditorEvent::SetOscServerAddress(ip) => {
                 nih_trace!("Edit Event {}", ip);
                 self.settings.osc_server_address = ip.clone();
                 *self.params.osc_server_address.write() = self.settings.osc_server_address.clone();
             }
-            DawOutEditorEvent::SetOscServerPort(port) => {
+            OsClapEditorEvent::SetOscServerPort(port) => {
                 nih_trace!("Edit Event {}", port);
                 self.settings.osc_server_port = port.clone();
                 *self.params.osc_server_port.write() = self.settings.osc_server_port.clone();
             }
-            DawOutEditorEvent::SetOscAddressBase(address) => {
+            OsClapEditorEvent::SetOscAddressBase(address) => {
                 nih_trace!("Edit Event {}", address);
                 self.settings.osc_address_base = address.clone();
                 *self.params.osc_address_base.write() = self.settings.osc_address_base.clone();
             }
-            DawOutEditorEvent::ConnectionChange => {
+            OsClapEditorEvent::ConnectionChange => {
                 nih_trace!(
                     "Connection Changed {}:{}",
                     self.settings.osc_server_address,
@@ -70,7 +70,7 @@ impl Model for DawOutEditor {
                     self.log.push(format!("Failed change connection"));
                 }
             }
-            DawOutEditorEvent::AddressBaseChange => {
+            OsClapEditorEvent::AddressBaseChange => {
                 nih_trace!("AddressBase Changed: {}", self.settings.osc_address_base);
                 self.log.push(format!("Base Address changed to: {}", self.settings.osc_address_base));
                 let send_result = self.sender.send(OscChannelMessageType::AddressBaseChange(
@@ -93,7 +93,7 @@ pub(crate) fn default_state() -> Arc<ViziaState> {
 }
 
 pub(crate) fn create(
-    params: Arc<DawOutParams>,
+    params: Arc<OsClapParams>,
     sender: Arc<Sender<OscChannelMessageType>>,
     editor_state: Arc<ViziaState>,
 ) -> Option<Box<dyn Editor>> {
@@ -101,7 +101,7 @@ pub(crate) fn create(
         assets::register_noto_sans_light(cx);
         assets::register_noto_sans_thin(cx);
 
-        DawOutEditor {
+        OsClapEditor {
             sender: sender.clone(),
             params: params.clone(),
             log: Vec::new(),
@@ -119,12 +119,12 @@ pub(crate) fn create(
         //ResizeHandle::new(cx);
 
         VStack::new(cx, |cx| {
-            Label::new(cx, "DAW Out")
+            Label::new(cx, "OSCLAP")
                 .font_size(40.0 * POINT_SCALE)
                 .class("title");
             HStack::new(cx, |cx| {
-                SettingsView::new(cx, DawOutEditor::settings, DawOutEditor::params, DawOutEditor::log);
-                ParamView::new(cx, DawOutEditor::params);
+                SettingsView::new(cx, OsClapEditor::settings, OsClapEditor::params, OsClapEditor::log);
+                ParamView::new(cx, OsClapEditor::params);
             });
         });
     })

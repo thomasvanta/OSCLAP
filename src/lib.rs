@@ -16,8 +16,8 @@ use std::thread::JoinHandle;
 mod editor;
 mod subviews;
 
-pub struct DawOut {
-    params: Arc<DawOutParams>,
+pub struct OsClap {
+    params: Arc<OsClapParams>,
     osc_thread: Option<JoinHandle<()>>,
     sender: Arc<Sender<OscChannelMessageType>>,
     receiver: Option<Receiver<OscChannelMessageType>>,
@@ -35,7 +35,7 @@ pub struct DawOut {
     p8_dirty: Arc<AtomicBool>,
 }
 
-impl Default for DawOut {
+impl Default for OsClap {
     fn default() -> Self {
         let p1_dirty = Arc::new(AtomicBool::new(false));
         let p2_dirty = Arc::new(AtomicBool::new(false));
@@ -48,7 +48,7 @@ impl Default for DawOut {
 
         let channel = OscChannel::default();
         Self {
-            params: Arc::new(DawOutParams::new(
+            params: Arc::new(OsClapParams::new(
                 p1_dirty.clone(),
                 p2_dirty.clone(),
                 p3_dirty.clone(),
@@ -77,7 +77,7 @@ impl Default for DawOut {
     }
 }
 
-impl Drop for DawOut {
+impl Drop for OsClap {
     fn drop(&mut self) {
         self.kill_background_thread();
     }
@@ -132,7 +132,7 @@ enum OscChannelMessageType {
 }
 
 #[derive(Params)]
-pub struct DawOutParams {
+pub struct OsClapParams {
     //Persisted Settings
     #[persist = "osc_server_address"]
     osc_server_address: RwLock<String>,
@@ -168,7 +168,7 @@ pub struct DawOutParams {
     param8: FloatParam,
 }
 
-impl DawOutParams {
+impl OsClapParams {
     #[allow(clippy::derivable_impls)]
     fn new(
         p1_dirty: Arc<AtomicBool>,
@@ -181,9 +181,9 @@ impl DawOutParams {
         p8_dirty: Arc<AtomicBool>,
     ) -> Self {
         Self {
-            osc_server_address: RwLock::new("127.0.0.1".to_string()),
-            osc_server_port: RwLock::new(9000),
-            osc_address_base: RwLock::new("daw-out".to_string()),
+            osc_server_address: RwLock::new("255.255.255.255".to_string()),
+            osc_server_port: RwLock::new(12345),
+            osc_address_base: RwLock::new("osclap".to_string()),
             flag_send_midi: BoolParam::new("flag_send_midi", true)
                 .hide()
                 .non_automatable(),
@@ -199,43 +199,43 @@ impl DawOutParams {
             .hide()
             .non_automatable(),
             param1: FloatParam::new("param1", 0.0, FloatRange::Linear { min: 0.0, max: 1.0 })
-                .with_step_size(0.01)
+                .with_step_size(0.001)
                 .with_callback(Arc::new(move |_x| p1_dirty.store(true, Ordering::Release))),
             param2: FloatParam::new("param2", 0.0, FloatRange::Linear { min: 0.0, max: 1.0 })
-                .with_step_size(0.01)
+                .with_step_size(0.001)
                 .with_callback(Arc::new(move |_x| p2_dirty.store(true, Ordering::Release))),
             param3: FloatParam::new("param3", 0.0, FloatRange::Linear { min: 0.0, max: 1.0 })
-                .with_step_size(0.01)
+                .with_step_size(0.001)
                 .with_callback(Arc::new(move |_x| p3_dirty.store(true, Ordering::Release))),
             param4: FloatParam::new("param4", 0.0, FloatRange::Linear { min: 0.0, max: 1.0 })
-                .with_step_size(0.01)
+                .with_step_size(0.001)
                 .with_callback(Arc::new(move |_x| p4_dirty.store(true, Ordering::Release))),
             param5: FloatParam::new("param5", 0.0, FloatRange::Linear { min: 0.0, max: 1.0 })
-                .with_step_size(0.01)
+                .with_step_size(0.001)
                 .with_callback(Arc::new(move |_x| p5_dirty.store(true, Ordering::Release))),
             param6: FloatParam::new("param6", 0.0, FloatRange::Linear { min: 0.0, max: 1.0 })
-                .with_step_size(0.01)
+                .with_step_size(0.001)
                 .with_callback(Arc::new(move |_x| p6_dirty.store(true, Ordering::Release))),
             param7: FloatParam::new("param7", 0.0, FloatRange::Linear { min: 0.0, max: 1.0 })
-                .with_step_size(0.01)
+                .with_step_size(0.001)
                 .with_callback(Arc::new(move |_x| p7_dirty.store(true, Ordering::Release))),
             param8: FloatParam::new("param8", 0.0, FloatRange::Linear { min: 0.0, max: 1.0 })
-                .with_step_size(0.01)
+                .with_step_size(0.001)
                 .with_callback(Arc::new(move |_x| p8_dirty.store(true, Ordering::Release))),
         }
     }
 }
 
-impl Plugin for DawOut {
-    const NAME: &'static str = "DAW Out";
-    const VENDOR: &'static str = "gamingrobot";
-    const URL: &'static str = "https://github.com/gamingrobot/daw-out";
+impl Plugin for OsClap {
+    const NAME: &'static str = "OSCLAP";
+    const VENDOR: &'static str = "VanTa";
+    const URL: &'static str = "vanta.xyz";
     const EMAIL: &'static str = "";
 
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
-    const MIDI_INPUT: MidiConfig = MidiConfig::Basic;
-    const MIDI_OUTPUT: MidiConfig = MidiConfig::None;
+    const MIDI_INPUT: MidiConfig = MidiConfig::MidiCCs;
+    const MIDI_OUTPUT: MidiConfig = MidiConfig::MidiCCs;
     const SAMPLE_ACCURATE_AUTOMATION: bool = true;
     const HARD_REALTIME_ONLY: bool = true;
 
@@ -317,6 +317,9 @@ impl Plugin for DawOut {
                 *self.params.osc_server_port.read()
             );
             nih_trace!("Connecting: {}", ip_port);
+            
+            socket.set_broadcast(true);
+
             let connect_result = socket.connect(&ip_port);
             if connect_result.is_err() {
                 nih_error!(
@@ -326,6 +329,7 @@ impl Plugin for DawOut {
                 );
                 return false;
             }
+
             nih_trace!("Connected!");
             nih_trace!("Connected to: {}", ip_port);
 
@@ -412,7 +416,7 @@ impl Plugin for DawOut {
     }
 }
 
-impl DawOut {
+impl OsClap {
     fn process_params(&self) -> Result<()> {
         self.send_dirty_param(&self.p1_dirty, &self.params.param1)?;
         self.send_dirty_param(&self.p2_dirty, &self.params.param2)?;
@@ -600,8 +604,8 @@ fn format_osc_address_base(raw_base: &str) -> String {
     }
 }
 
-impl ClapPlugin for DawOut {
-    const CLAP_ID: &'static str = "com.gamingrobot.daw-out";
+impl ClapPlugin for OsClap {
+    const CLAP_ID: &'static str = "xyz.vanta.osclap";
     const CLAP_DESCRIPTION: Option<&'static str> =
         Some("Outputs MIDI/OSC information from the DAW");
     const CLAP_FEATURES: &'static [ClapFeature] = &[
@@ -617,10 +621,10 @@ impl ClapPlugin for DawOut {
     const CLAP_POLY_MODULATION_CONFIG: Option<PolyModulationConfig> = None;
 }
 
-impl Vst3Plugin for DawOut {
-    const VST3_CLASS_ID: [u8; 16] = *b"grbt-daw-outputs";
-    const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] = &[Vst3SubCategory::Instrument, Vst3SubCategory::Tools];
-}
+// impl Vst3Plugin for OsClap {
+//     const VST3_CLASS_ID: [u8; 16] = *b"grbt-daw-outputs";
+//     const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] = &[Vst3SubCategory::Instrument, Vst3SubCategory::Tools];
+// }
 
-nih_export_clap!(DawOut);
-nih_export_vst3!(DawOut);
+nih_export_clap!(OsClap);
+//nih_export_vst3!(OsClap);

@@ -1,7 +1,7 @@
 use nih_plug::prelude::*;
 
-use daw_out::DawOut;
+use OSCLAP::OsClap;
 
 fn main() {
-    nih_export_standalone::<DawOut>();
+    nih_export_standalone::<OsClap>();
 }
