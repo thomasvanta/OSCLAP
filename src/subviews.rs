@@ -83,7 +83,7 @@ impl SettingsView {
     {
         Self.build(cx, |cx| {
             HStack::new(cx, |cx| {
-                Label::new(cx, "OSC Server Address").class("label");
+                Label::new(cx, "OSC Server IP").class("label");
                 Textbox::new(cx, settings.map(|settings| settings.osc_server_address.clone()))
                     .on_edit(move |cx, text| {
                         //TODO: validate
@@ -92,7 +92,7 @@ impl SettingsView {
                     .on_submit(|cx,  _, _| {
                         cx.emit(OsClapEditorEvent::ConnectionChange);
                     })
-                    .width(Pixels(115.0)); //180 - 60 - 5
+                    .width(Pixels(135.0)); // 200 = 135 + 60 + 5
                 Textbox::new(cx, settings.map(|settings| settings.osc_server_port))
                     .on_edit(move |cx, text| {
                         if let Ok(val) = text.parse::<u16>() {
@@ -119,19 +119,21 @@ impl SettingsView {
                     .on_submit(|cx,  _, _| {
                         cx.emit(OsClapEditorEvent::AddressBaseChange);
                     })
-                    .width(Pixels(180.0));
+                    .width(Pixels(200.0));
             })
             .class("row");
             HStack::new(cx, |cx| {
                 Label::new(cx, "Send MIDI").class("label");
                 ParamSlider::new(cx, params, |params| &params.flag_send_midi)
+                    .width(Pixels(100.0))
                     .class("widget");
             })
             .class("row");
             HStack::new(cx, |cx| {
                 Label::new(cx, "Send Audio").class("label");
                 ParamSlider::new(cx, params, |params| &params.flag_send_audio)
-                .class("widget");
+                    .width(Pixels(100.0))
+                    .class("widget");
             })
             .class("row");
             VirtualList::new(cx, log, 20.0, |cx, _index, item| {

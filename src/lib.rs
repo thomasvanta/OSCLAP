@@ -12,6 +12,7 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
+use std::ops::Index;
 
 mod editor;
 mod subviews;
@@ -166,6 +167,24 @@ pub struct OsClapParams {
     param7: FloatParam,
     #[id = "param8"]
     param8: FloatParam,
+}
+
+impl Index<usize> for OsClapParams {
+    type Output = FloatParam;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.param1,
+            1 => &self.param2,
+            2 => &self.param3,
+            3 => &self.param4,
+            4 => &self.param5,
+            5 => &self.param6,
+            6 => &self.param7,
+            7 => &self.param8,
+            n => panic!("Invalid Parameter index: {}", n)
+        }
+    }
 }
 
 impl OsClapParams {

@@ -121,6 +121,7 @@ pub(crate) fn create(
         VStack::new(cx, |cx| {
             Label::new(cx, "OSCLAP")
                 .font_size(40.0 * POINT_SCALE)
+                .left(Units::Pixels(5.0))
                 .class("title");
             HStack::new(cx, |cx| {
                 SettingsView::new(cx, OsClapEditor::settings, OsClapEditor::params, OsClapEditor::log);
